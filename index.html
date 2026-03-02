@@ -55,7 +55,7 @@
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 16px); }
+/* 移除 html 捲動特效，因為改為分頁切換 */
 body {
   font-family: var(--font-body);
   background: var(--bg-primary);
@@ -147,22 +147,35 @@ body {
   transition: all var(--transition); text-decoration: none;
   border-left: 3px solid transparent;
 }
-.menu-item:hover { background: var(--bg-tertiary); color: var(--text-primary); border-left-color: var(--brand-green); }
+.menu-item:hover, .menu-item.active-nav { background: var(--bg-tertiary); color: var(--text-primary); border-left-color: var(--brand-green); }
 .menu-item .num {
   font-family: var(--font-mono); font-size: 11px; font-weight: 500;
   color: var(--text-tertiary); width: 24px; text-align: right;
 }
 
-/* ═══ MAIN CONTENT ═══ */
+/* ═══ MAIN CONTENT & PAGINATION ═══ */
 main {
   margin-top: var(--header-h);
   min-height: calc(100vh - var(--header-h) - var(--footer-h));
+  position: relative;
+}
+.page-section {
+  display: none; 
+  animation: fadeInPage 0.4s ease;
+  min-height: calc(100vh - var(--header-h) - var(--footer-h));
+}
+.page-section.active-page { display: block; }
+section#hero.active-page { display: flex; } /* Hero 需維持 flex 置中 */
+
+@keyframes fadeInPage {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ═══ HERO ═══ */
 .hero {
   position: relative; min-height: 85vh;
-  display: flex; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
   background: var(--accent-navy);
   overflow: hidden;
 }
@@ -209,7 +222,7 @@ main {
 .hero-scroll {
   position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
   color: rgba(255,255,255,0.4); font-size: 12px; text-align: center;
-  animation: pulse 2s infinite;
+  animation: pulse 2s infinite; cursor: pointer;
 }
 @keyframes pulse { 0%,100%{opacity:0.4}50%{opacity:0.8} }
 
@@ -236,9 +249,9 @@ main {
 .card {
   background: var(--bg-secondary); border-radius: var(--radius-md);
   border: 1px solid var(--border-light); padding: 28px;
-  transition: all var(--transition); box-shadow: var(--shadow-sm);
+  transition: all var(--transition); box-shadow: var(--shadow-sm); display: block;
 }
-.card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--brand-green); }
 .card-grid { display: grid; gap: 20px; }
 .card-grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .card-grid-3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
@@ -317,20 +330,6 @@ main {
 .bar-track { flex:1; height: 28px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; position: relative; }
 .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 10px; font-size: 11px; font-weight: 700; color: #FFF; transition: width 1s ease; }
 .bar-val { width: 50px; font-size: 13px; font-weight: 700; color: var(--text-primary); text-align: right; flex-shrink:0; }
-
-/* ═══ TIMELINE ═══ */
-.timeline { position: relative; padding-left: 32px; margin: 32px 0; }
-.timeline::before { content:''; position: absolute; left: 11px; top:0; bottom:0; width:2px; background: var(--border-medium); }
-.tl-item { position: relative; margin-bottom: 28px; }
-.tl-dot {
-  position: absolute; left: -32px; top: 4px;
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--bg-secondary); border: 3px solid var(--brand-green);
-  z-index:2;
-}
-.tl-week { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--brand-green); margin-bottom: 4px; }
-.tl-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
-.tl-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
 
 /* ═══ CHIP / TAG ═══ */
 .chip {
@@ -435,12 +434,12 @@ main {
 <header class="header">
   <div class="header-left">
     <button class="hdr-btn" id="menuBtn" title="Menu">☰</button>
-    <span class="brand-title" onclick="scrollToSection('hero')">SMMC-EMI</span>
+    <span class="brand-title" onclick="switchPage('hero')">SMMC-EMI</span>
     <span class="brand-tag">Analysis</span>
   </div>
   <div class="header-right">
     <div class="voice-group">
-      <button class="hdr-btn" id="voicePlay" title="Play narration">▶</button>
+      <button class="hdr-btn" id="voicePlay" title="Play page narration">▶</button>
       <button class="hdr-btn" id="voicePause" title="Pause" style="display:none">⏸</button>
       <button class="hdr-btn" id="voiceStop" title="Stop">⏹</button>
     </div>
@@ -458,325 +457,351 @@ main {
   </div>
   <div class="menu-section">
     <div class="menu-section-title" data-i18n="menu-nav">NAVIGATION</div>
-    <a class="menu-item" onclick="scrollToSection('hero')"><span class="num">00</span><span data-i18n="nav-home">首頁</span></a>
-    <a class="menu-item" onclick="scrollToSection('exec')"><span class="num">ES</span><span data-i18n="nav-exec">Executive Summary</span></a>
-    <a class="menu-item" onclick="scrollToSection('sec1')"><span class="num">01</span><span data-i18n="nav-s1">學生組成分析</span></a>
-    <a class="menu-item" onclick="scrollToSection('sec2')"><span class="num">02</span><span data-i18n="nav-s2">英語能力評估</span></a>
-    <a class="menu-item" onclick="scrollToSection('sec3')"><span class="num">03</span><span data-i18n="nav-s3">學習動機分群</span></a>
-    <a class="menu-item" onclick="scrollToSection('sec4')"><span class="num">04</span><span data-i18n="nav-s4">課外經歷與 TP 連結</span></a>
-    <a class="menu-item" onclick="scrollToSection('sec5')"><span class="num">05</span><span data-i18n="nav-s5">學生期待與課程契合</span></a>
-    <a class="menu-item" onclick="scrollToSection('sec6')"><span class="num">06</span><span data-i18n="nav-s6">教學策略建議</span></a>
-    <a class="menu-item" onclick="scrollToSection('sec7')"><span class="num">07</span><span data-i18n="nav-s7">潛在風險與關注點</span></a>
-    <a class="menu-item" onclick="scrollToSection('materials')"><span class="num">⊕</span><span data-i18n="nav-mat">原始資料</span></a>
+    <a class="menu-item active-nav" onclick="switchPage('hero')"><span class="num">00</span><span data-i18n="nav-home">首頁</span></a>
+    <a class="menu-item" onclick="switchPage('exec')"><span class="num">ES</span><span data-i18n="nav-exec">Executive Summary</span></a>
+    <a class="menu-item" onclick="switchPage('sec1')"><span class="num">01</span><span data-i18n="nav-s1">學生組成分析</span></a>
+    <a class="menu-item" onclick="switchPage('sec2')"><span class="num">02</span><span data-i18n="nav-s2">英語能力評估</span></a>
+    <a class="menu-item" onclick="switchPage('sec3')"><span class="num">03</span><span data-i18n="nav-s3">學習動機分群</span></a>
+    <a class="menu-item" onclick="switchPage('sec4')"><span class="num">04</span><span data-i18n="nav-s4">課外經歷與 TP 連結</span></a>
+    <a class="menu-item" onclick="switchPage('sec5')"><span class="num">05</span><span data-i18n="nav-s5">學生期待與課程契合</span></a>
+    <a class="menu-item" onclick="switchPage('sec6')"><span class="num">06</span><span data-i18n="nav-s6">教學策略建議</span></a>
+    <a class="menu-item" onclick="switchPage('sec7')"><span class="num">07</span><span data-i18n="nav-s7">潛在風險與關注點</span></a>
+    <a class="menu-item" onclick="switchPage('materials')"><span class="num">⊕</span><span data-i18n="nav-mat">原始資料</span></a>
   </div>
 </nav>
 
-<!-- HERO -->
-<section class="hero" id="hero">
-  <div class="hero-grid"></div>
-  <div class="hero-accent hero-accent-1"></div>
-  <div class="hero-accent hero-accent-2"></div>
-  <div class="hero-content">
-    <div class="hero-eyebrow">1142 SMMC-EMI · NCNU IBS</div>
-    <h1 class="hero-title" data-i18n="hero-title">班級背景分析報告</h1>
-    <p class="hero-subtitle" data-i18n="hero-sub">國際策略管理（全英授課）課程學生背景問卷深度分析<br>交叉對照課程大綱，提出教學策略建議</p>
-    <div class="hero-meta">
-      <div class="hero-meta-item"><strong>30+</strong> <span data-i18n="hero-m1">位學生</span></div>
-      <div class="hero-meta-item"><strong>4</strong> <span data-i18n="hero-m2">個國籍</span></div>
-      <div class="hero-meta-item"><strong>3</strong> <span data-i18n="hero-m3">學業階段</span></div>
-      <div class="hero-meta-item"><strong>16</strong> <span data-i18n="hero-m4">週課程</span></div>
-    </div>
-  </div>
-  <div class="hero-scroll">↓ <span data-i18n="hero-scroll">Scroll to explore</span></div>
-</section>
+<!-- MAIN APP CONTENT -->
+<main>
 
-<!-- EXECUTIVE SUMMARY -->
-<section class="section" id="exec">
-  <div class="container">
-    <div class="section-header fade-up">
-      <div class="section-num">EXECUTIVE SUMMARY</div>
-      <h2 class="section-title" data-i18n="exec-title">核心發現</h2>
-      <p class="section-lead" data-i18n="exec-lead">基於學生背景問卷與課程大綱的交叉分析，以下為六項關鍵發現。</p>
-    </div>
-    <div class="key-box fade-up">
-      <h4 data-i18n="exec-box-title">★ Key Findings</h4>
-      <ol>
-        <li data-i18n="kf1">英語能力是全班最普遍的焦慮，超過 70% 學生直接或間接提及英語能力不足，但課程大綱已充分融入 GenAI 工具作為語言支援。</li>
-        <li data-i18n="kf2">學生組成多元：涵蓋大三至碩二、本地生與國際生（印尼、緬甸僑生），與課綱強調的「多元背景分組」目標高度契合。</li>
-        <li data-i18n="kf3">學習動機積極：即使是必修課，絕大多數學生仍主動賦予額外的學習目標與期待。</li>
-        <li data-i18n="kf4">學生課外經歷豐富，可直接應用於 Term Project (TP) 的企業分析與課堂討論。</li>
-        <li data-i18n="kf5">課程已內建 Flipped Classroom、PBL、Coggle、Coursera MOOCs 等機制，與學生「希望有結構化學習路徑」的需求相符。</li>
-        <li data-i18n="kf6">最大挑戰在於平衡全英語授課品質與降低語言障礙之間的張力，特別是在 Coggle 報告與課堂 Q&A 環節。</li>
-      </ol>
-    </div>
-    <div class="stat-strip fade-up">
-      <div class="stat-item"><div class="stat-num">70%+</div><div class="stat-label" data-i18n="st1">提及英語焦慮</div></div>
-      <div class="stat-item"><div class="stat-num">4</div><div class="stat-label" data-i18n="st2">動機類型分群</div></div>
-      <div class="stat-item"><div class="stat-num">15+</div><div class="stat-label" data-i18n="st3">種課外經歷類型</div></div>
-      <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" data-i18n="st4">項教學建議</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- SECTION 1 -->
-<section class="section section-alt" id="sec1">
-  <div class="container">
-    <div class="section-header fade-up">
-      <div class="section-num">01 — STUDENT COMPOSITION</div>
-      <h2 class="section-title" data-i18n="s1-title">學生組成分析</h2>
-      <p class="section-lead" data-i18n="s1-lead">約 30+ 位學生，主要來自國際企業學系 (IBS)，涵蓋大學部高年級生與碩士生，國籍背景多元。</p>
-    </div>
-    <div class="card-grid card-grid-2 fade-up">
-      <div class="card">
-        <div class="card-label" style="color:var(--accent-teal)" data-i18n="s1-c1-label">國籍背景</div>
-        <div class="card-title" data-i18n="s1-c1-title">跨文化課堂環境</div>
-        <div class="card-body" data-i18n="s1-c1-body">學生包含來自印尼、緬甸的國際生與僑生，以及台灣本地學生。國際生通常英語較強但中文較弱，本地生則反之，形成互補潛力。與課綱第 III.A.1 條強調的「多元背景分組以促進同儕學習」目標高度契合。</div>
-      </div>
-      <div class="card">
-        <div class="card-label" style="color:var(--accent-coral)" data-i18n="s1-c2-label">學業階段</div>
-        <div class="card-title" data-i18n="s1-c2-title">多層次學習需求</div>
-        <div class="card-body" data-i18n="s1-c2-body">大三/大四生正在探索職涯方向（部分為五年一貫學碩生）；碩一生希望銜接學術與實務；碩二生即將畢業，需要整合所學。TP 階段性報告的設計可滿足各階段需求。</div>
+  <!-- HERO (Page 00) -->
+  <section class="page-section hero active-page" id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-accent hero-accent-1"></div>
+    <div class="hero-accent hero-accent-2"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">1142 SMMC-EMI · NCNU IBS</div>
+      <h1 class="hero-title" data-i18n="hero-title">班級背景分析報告</h1>
+      <p class="hero-subtitle" data-i18n="hero-sub">國際策略管理（全英授課）課程學生背景問卷深度分析<br>交叉對照課程大綱，提出教學策略建議</p>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><strong>30+</strong> <span data-i18n="hero-m1">位學生</span></div>
+        <div class="hero-meta-item"><strong>4</strong> <span data-i18n="hero-m2">個國籍</span></div>
+        <div class="hero-meta-item"><strong>3</strong> <span data-i18n="hero-m3">學業階段</span></div>
+        <div class="hero-meta-item"><strong>16</strong> <span data-i18n="hero-m4">週課程</span></div>
       </div>
     </div>
-    <div class="data-table-wrap fade-up" style="margin-top:32px">
-      <table class="data-table">
-        <thead><tr>
-          <th data-i18n="t1-h1">學業階段</th>
-          <th data-i18n="t1-h2">特徵</th>
-          <th data-i18n="t1-h3">與課程的連結</th>
-        </tr></thead>
-        <tbody>
-          <tr><td data-i18n="t1-r1c1">大三/大四生</td><td data-i18n="t1-r1c2">正在探索職涯方向，部分為五年一貫學碩生</td><td data-i18n="t1-r1c3">可透過 TP 提前接觸策略分析實務；過程即為 PM 能力訓練</td></tr>
-          <tr><td data-i18n="t1-r2c1">碩一生</td><td data-i18n="t1-r2c2">剛進研究所，希望銜接學術與實務</td><td data-i18n="t1-r2c3">Coursera 證書課程 (ENT/CS) 可補強理論基礎</td></tr>
-          <tr><td data-i18n="t1-r3c1">碩二生</td><td data-i18n="t1-r3c2">即將畢業，需要整合所學</td><td data-i18n="t1-r3c3">TP Final 的 SPA 報告可直接轉化為論文素材</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
+    <div class="hero-scroll" onclick="switchPage('exec')">↓ <span data-i18n="hero-scroll">Start Exploring</span></div>
+  </section>
 
-<!-- SECTION 2 -->
-<section class="section" id="sec2">
-  <div class="container">
-    <div class="section-header fade-up">
-      <div class="section-num">02 — ENGLISH PROFICIENCY</div>
-      <h2 class="section-title" data-i18n="s2-title">英語能力與需求評估</h2>
-      <p class="section-lead" data-i18n="s2-lead">英語能力是本次問卷中最突出的主題。課程大綱已融入多種 GenAI 工具作為語言支援。</p>
-    </div>
-
-    <div class="bar-chart fade-up">
-      <div class="bar-row">
-        <div class="bar-label" data-i18n="b-a">A群：相對有信心</div>
-        <div class="bar-track"><div class="bar-fill" style="width:23%;background:var(--brand-green)">6-8人</div></div>
-        <div class="bar-val">~23%</div>
+  <!-- EXECUTIVE SUMMARY (Page ES) -->
+  <section class="page-section section" id="exec">
+    <div class="container">
+      <div class="section-header fade-up">
+        <div class="section-num">EXECUTIVE SUMMARY</div>
+        <h2 class="section-title" data-i18n="exec-title">核心發現</h2>
+        <p class="section-lead" data-i18n="exec-lead">基於學生背景問卷與課程大綱的交叉分析，以下為六項關鍵發現。</p>
       </div>
-      <div class="bar-row">
-        <div class="bar-label" data-i18n="b-b">B群：願意挑戰但焦慮</div>
-        <div class="bar-track"><div class="bar-fill" style="width:55%;background:var(--accent-teal)">15-18人</div></div>
-        <div class="bar-val">~55%</div>
+      <div class="key-box fade-up">
+        <h4 data-i18n="exec-box-title">★ Key Findings</h4>
+        <ol>
+          <li data-i18n="kf1">英語能力是全班最普遍的焦慮，超過 70% 學生直接或間接提及英語能力不足，但課程大綱已充分融入 GenAI 工具作為語言支援。</li>
+          <li data-i18n="kf2">學生組成多元：涵蓋大三至碩二、本地生與國際生（印尼、緬甸僑生），與課綱強調的「多元背景分組」目標高度契合。</li>
+          <li data-i18n="kf3">學習動機積極：即使是必修課，絕大多數學生仍主動賦予額外的學習目標與期待。</li>
+          <li data-i18n="kf4">學生課外經歷豐富，可直接應用於 Term Project (TP) 的企業分析與課堂討論。</li>
+          <li data-i18n="kf5">課程已內建 Flipped Classroom、PBL、Coggle、Coursera MOOCs 等機制，與學生「希望有結構化學習路徑」的需求相符。</li>
+          <li data-i18n="kf6">最大挑戰在於平衡全英語授課品質與降低語言障礙之間的張力，特別是在 Coggle 報告與課堂 Q&A 環節。</li>
+        </ol>
       </div>
-      <div class="bar-row">
-        <div class="bar-label" data-i18n="b-c">C群：明確障礙</div>
-        <div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--accent-coral)">5-7人</div></div>
-        <div class="bar-val">~22%</div>
+      <div class="stat-strip fade-up">
+        <div class="stat-item"><div class="stat-num">70%+</div><div class="stat-label" data-i18n="st1">提及英語焦慮</div></div>
+        <div class="stat-item"><div class="stat-num">4</div><div class="stat-label" data-i18n="st2">動機類型分群</div></div>
+        <div class="stat-item"><div class="stat-num">15+</div><div class="stat-label" data-i18n="st3">種課外經歷類型</div></div>
+        <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" data-i18n="st4">項教學建議</div></div>
       </div>
     </div>
+  </section>
 
-    <div class="data-table-wrap fade-up">
-      <table class="data-table">
-        <thead><tr><th data-i18n="t2-h1">分群</th><th data-i18n="t2-h2">特徵描述</th><th data-i18n="t2-h3">課程設計對應</th></tr></thead>
-        <tbody>
-          <tr><td data-i18n="t2-r1c1">A群：相對有信心</td><td data-i18n="t2-r1c2">多為國際生/僑生，焦慮在學術詞彙深度</td><td data-i18n="t2-r1c3">可充分發揮於 Coggle 報告、Q&A 組織、幫助組員</td></tr>
-          <tr><td data-i18n="t2-r2c1">B群：願意挑戰但焦慮</td><td data-i18n="t2-r2c2">最大群體；主動選擇 EMI 突破舒適圈，但對聽說讀感到不安</td><td data-i18n="t2-r2c3">Flipped Classroom 課前預習可降低課堂認知負荷</td></tr>
-          <tr><td data-i18n="t2-r3c1">C群：英語為明確障礙</td><td data-i18n="t2-r3c2">依賴即時翻譯，希望偶爾用中文</td><td data-i18n="t2-r3c3">GenAI 工具可作為即時語言輔助；BA 可用中文撰寫</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="quote-block fade-up">
-      <p>English 😭</p>
-      <div class="attr">— Student response, "Most Needed Assistance"</div>
-    </div>
-    <div class="quote-block fade-up">
-      <p>I'd like to feel the excitement of learning something new without feeling burden/forced.</p>
-      <div class="attr">— Gisele, "Most Needed Assistance"</div>
-    </div>
-  </div>
-</section>
-
-<!-- SECTION 3 -->
-<section class="section section-alt" id="sec3">
-  <div class="container">
-    <div class="section-header fade-up">
-      <div class="section-num">03 — MOTIVATION CLUSTERS</div>
-      <h2 class="section-title" data-i18n="s3-title">學習動機分群</h2>
-      <p class="section-lead" data-i18n="s3-lead">學生動機可分為四種類型，幾乎沒有學生是純粹被動的。即使起點是「因為必修」，他們大多會接著說出具體期待。</p>
-    </div>
-    <div class="card-grid card-grid-2 fade-up">
-      <div class="card">
-        <div class="card-label" style="color:var(--accent-coral)">🎯</div>
-        <div class="card-title" data-i18n="m1-t">職涯驅動型</div>
-        <div class="card-body" data-i18n="m1-b">明確職業目標（金融業、海外工作、創業），期待可帶走的實戰能力。課程副標題「Become a competent Product Manager in MNCs」正好回應此需求。</div>
+  <!-- SECTION 1 (Page 01) -->
+  <section class="page-section section section-alt" id="sec1">
+    <div class="container">
+      <div class="section-header fade-up">
+        <div class="section-num">01 — STUDENT COMPOSITION</div>
+        <h2 class="section-title" data-i18n="s1-title">學生組成分析</h2>
+        <p class="section-lead" data-i18n="s1-lead">約 30+ 位學生，主要來自國際企業學系 (IBS)，涵蓋大學部高年級生與碩士生，國籍背景多元。</p>
       </div>
-      <div class="card">
-        <div class="card-label" style="color:var(--accent-teal)">📚</div>
-        <div class="card-title" data-i18n="m2-t">學術成長型</div>
-        <div class="card-body" data-i18n="m2-b">希望培養批判思考、將理論應用於真實案例。課程的 PBL 方法、TP 階段性報告（TP0→TP1→TP2→TP3→TP Final）提供漸進式學習路徑。</div>
+      <div class="card-grid card-grid-2 fade-up">
+        <div class="card">
+          <div class="card-label" style="color:var(--accent-teal)" data-i18n="s1-c1-label">國籍背景</div>
+          <div class="card-title" data-i18n="s1-c1-title">跨文化課堂環境</div>
+          <div class="card-body" data-i18n="s1-c1-body">學生包含來自印尼、緬甸的國際生與僑生，以及台灣本地學生。國際生通常英語較強但中文較弱，本地生則反之，形成互補潛力。與課綱第 III.A.1 條強調的「多元背景分組以促進同儕學習」目標高度契合。</div>
+        </div>
+        <div class="card">
+          <div class="card-label" style="color:var(--accent-coral)" data-i18n="s1-c2-label">學業階段</div>
+          <div class="card-title" data-i18n="s1-c2-title">多層次學習需求</div>
+          <div class="card-body" data-i18n="s1-c2-body">大三/大四生正在探索職涯方向（部分為五年一貫學碩生）；碩一生希望銜接學術與實務；碩二生即將畢業，需要整合所學。TP 階段性報告的設計可滿足各階段需求。</div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-label" style="color:var(--accent-gold)">🗣️</div>
-        <div class="card-title" data-i18n="m3-t">語言提升型</div>
-        <div class="card-body" data-i18n="m3-b">主要目標是提升英語能力，課程內容是「載體」。D-ID 影片製作、英語口說 BA（3分鐘英語錄音）、Coursera 英語課程都是很好的練習機會。</div>
-      </div>
-      <div class="card">
-        <div class="card-label" style="color:var(--text-tertiary)">🔄</div>
-        <div class="card-title" data-i18n="m4-t">制度完成型（但非消極）</div>
-        <div class="card-body" data-i18n="m4-b">因必修而來，但多數會主動賦予課程額外意義。BA 加分機制（最高 10 分）可有效激勵這群學生超越基本要求。</div>
+      <div class="data-table-wrap fade-up" style="margin-top:32px">
+        <table class="data-table">
+          <thead><tr>
+            <th data-i18n="t1-h1">學業階段</th>
+            <th data-i18n="t1-h2">特徵</th>
+            <th data-i18n="t1-h3">與課程的連結</th>
+          </tr></thead>
+          <tbody>
+            <tr><td data-i18n="t1-r1c1">大三/大四生</td><td data-i18n="t1-r1c2">正在探索職涯方向，部分為五年一貫學碩生</td><td data-i18n="t1-r1c3">可透過 TP 提前接觸策略分析實務；過程即為 PM 能力訓練</td></tr>
+            <tr><td data-i18n="t1-r2c1">碩一生</td><td data-i18n="t1-r2c2">剛進研究所，希望銜接學術與實務</td><td data-i18n="t1-r2c3">Coursera 證書課程 (ENT/CS) 可補強理論基礎</td></tr>
+            <tr><td data-i18n="t1-r3c1">碩二生</td><td data-i18n="t1-r3c2">即將畢業，需要整合所學</td><td data-i18n="t1-r3c3">TP Final 的 SPA 報告可直接轉化為論文素材</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- SECTION 4 -->
-<section class="section" id="sec4">
-  <div class="container">
-    <div class="section-header fade-up">
-      <div class="section-num">04 — EXTRACURRICULAR × TERM PROJECT</div>
-      <h2 class="section-title" data-i18n="s4-title">課外經歷與 TP 連結</h2>
-      <p class="section-lead" data-i18n="s4-lead">學生豐富的實習經歷可直接應用於 Term Project 的企業分析各階段。</p>
-    </div>
+  <!-- SECTION 2 (Page 02) -->
+  <section class="page-section section" id="sec2">
+    <div class="container">
+      <div class="section-header fade-up">
+        <div class="section-num">02 — ENGLISH PROFICIENCY</div>
+        <h2 class="section-title" data-i18n="s2-title">英語能力與需求評估</h2>
+        <p class="section-lead" data-i18n="s2-lead">英語能力是本次問卷中最突出的主題。課程大綱已融入多種 GenAI 工具作為語言支援。</p>
+      </div>
 
-    <div class="data-table-wrap fade-up">
-      <table class="data-table">
-        <thead><tr><th data-i18n="t4-h1">學生經歷</th><th data-i18n="t4-h2">TP 對應主題</th><th data-i18n="t4-h3">課程週次</th></tr></thead>
-        <tbody>
-          <tr><td>Club Med 日本/馬爾地夫實習</td><td data-i18n="t4-r1c2">觀光業國際擴張策略、Geographical Expansion</td><td>W13, TP3</td></tr>
-          <tr><td>Toyota HR 實習</td><td data-i18n="t4-r2c2">跨國企業組織結構、Core Competencies</td><td>W8, TP2</td></tr>
-          <tr><td data-i18n="t4-r3c1">越南證券公司實習</td><td data-i18n="t4-r3c2">金融業 PESTEL 分析與競爭動態</td><td>W6, TP1</td></tr>
-          <tr><td data-i18n="t4-r4c1">數位行銷/品牌規劃競賽</td><td data-i18n="t4-r4c2">VPC Framework 與 Business Model</td><td>W5</td></tr>
-          <tr><td data-i18n="t4-r5c1">黑客松經驗</td><td data-i18n="t4-r5c2">MVP 與 Tech-Product-Market Fit</td><td>W8-W9</td></tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="bar-chart fade-up">
+        <div class="bar-row">
+          <div class="bar-label" data-i18n="b-a">A群：相對有信心</div>
+          <div class="bar-track"><div class="bar-fill" style="width:23%;background:var(--brand-green)">6-8人</div></div>
+          <div class="bar-val">~23%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label" data-i18n="b-b">B群：願意挑戰但焦慮</div>
+          <div class="bar-track"><div class="bar-fill" style="width:55%;background:var(--accent-teal)">15-18人</div></div>
+          <div class="bar-val">~55%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label" data-i18n="b-c">C群：明確障礙</div>
+          <div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--accent-coral)">5-7人</div></div>
+          <div class="bar-val">~22%</div>
+        </div>
+      </div>
 
-    <div class="fade-up" style="margin-top:24px">
-      <div style="display:flex;flex-wrap:wrap;gap:4px">
-        <span class="chip chip-green">Club Med</span>
-        <span class="chip chip-teal">Toyota</span>
-        <span class="chip chip-coral">證券公司</span>
-        <span class="chip chip-gold">黑客松</span>
-        <span class="chip chip-green">行銷競賽</span>
-        <span class="chip chip-teal">UI/UX 設計</span>
-        <span class="chip chip-gold">語言學校</span>
-        <span class="chip chip-coral">旅展團隊</span>
-        <span class="chip chip-green">新加坡實習</span>
-        <span class="chip chip-teal">餐飲業</span>
+      <div class="data-table-wrap fade-up">
+        <table class="data-table">
+          <thead><tr><th data-i18n="t2-h1">分群</th><th data-i18n="t2-h2">特徵描述</th><th data-i18n="t2-h3">課程設計對應</th></tr></thead>
+          <tbody>
+            <tr><td data-i18n="t2-r1c1">A群：相對有信心</td><td data-i18n="t2-r1c2">多為國際生/僑生，焦慮在學術詞彙深度</td><td data-i18n="t2-r1c3">可充分發揮於 Coggle 報告、Q&A 組織、幫助組員</td></tr>
+            <tr><td data-i18n="t2-r2c1">B群：願意挑戰但焦慮</td><td data-i18n="t2-r2c2">最大群體；主動選擇 EMI 突破舒適圈，但對聽說讀感到不安</td><td data-i18n="t2-r2c3">Flipped Classroom 課前預習可降低課堂認知負荷</td></tr>
+            <tr><td data-i18n="t2-r3c1">C群：英語為明確障礙</td><td data-i18n="t2-r3c2">依賴即時翻譯，希望偶爾用中文</td><td data-i18n="t2-r3c3">GenAI 工具可作為即時語言輔助；BA 可用中文撰寫</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="quote-block fade-up">
+        <p>English 😭</p>
+        <div class="attr">— Student response, "Most Needed Assistance"</div>
+      </div>
+      <div class="quote-block fade-up">
+        <p>I'd like to feel the excitement of learning something new without feeling burden/forced.</p>
+        <div class="attr">— Gisele, "Most Needed Assistance"</div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- SECTION 5 -->
-<section class="section section-alt" id="sec5">
-  <div class="container">
-    <div class="section-header fade-up">
-      <div class="section-num">05 — EXPECTATIONS × COURSE DESIGN</div>
-      <h2 class="section-title" data-i18n="s5-title">學生期待與課程設計之契合分析</h2>
-    </div>
-
-    <div class="data-table-wrap fade-up">
-      <table class="data-table">
-        <thead><tr><th data-i18n="t5-h1">學生期待</th><th data-i18n="t5-h2">課程已有設計</th><th data-i18n="t5-h3">可強化之處</th></tr></thead>
-        <tbody>
-          <tr><td data-i18n="t5-r1c1">案例分析指導</td><td data-i18n="t5-r1c2">TP0→TP3 階段性報告，教師透過 Coggle 監看進度</td><td data-i18n="t5-r1c3">可在各 TP 階段提供結構化分析模板</td></tr>
-          <tr><td data-i18n="t5-r2c1">團隊專案回饋</td><td data-i18n="t5-r2c2">Coggle 共編讓教師/TA 可即時留言</td><td data-i18n="t5-r2c3">可建立 TP 中期檢查點</td></tr>
-          <tr><td data-i18n="t5-r3c1">系統性學習規劃</td><td data-i18n="t5-r3c2">16 週課程已有清晰進度表</td><td data-i18n="t5-r3c3">可在 W1-W2 明確呈現「學習地圖」</td></tr>
-          <tr><td data-i18n="t5-r4c1">AI 工具學習</td><td data-i18n="t5-r4c2">課綱已列入 ChatGPT/Claude/NotebookLM/D-ID 等多種工具</td><td data-i18n="t5-r4c3">可在 W2 特別強調「語言輔助」用途</td></tr>
-          <tr><td data-i18n="t5-r5c1">無壓力課堂氛圍</td><td data-i18n="t5-r5c2">Peer Review 以貢獻度而非英語正確度評分；BA 允許中英文撰寫</td><td data-i18n="t5-r5c3">課堂初期多用小組討論而非全班點名發言</td></tr>
-          <tr><td data-i18n="t5-r6c1">論文方向探索</td><td data-i18n="t5-r6c2">TP 企業分析可作為論文題目的前期探索</td><td data-i18n="t5-r6c3">可引導碩士生選擇與論文相關的企業</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<!-- SECTION 6 -->
-<section class="section" id="sec6">
-  <div class="container">
-    <div class="section-header fade-up">
-      <div class="section-num">06 — TEACHING STRATEGIES</div>
-      <h2 class="section-title" data-i18n="s6-title">針對性教學策略建議</h2>
-    </div>
-
-    <div class="accordion fade-up">
-      <div class="acc-item open">
-        <div class="acc-header" onclick="toggleAcc(this)"><span data-i18n="a1-t">6.1 語言鷹架強化 (Language Scaffolding)</span><span class="acc-arrow">▾</span></div>
-        <div class="acc-body"><div class="acc-body-inner">
-          <p data-i18n="a1-b">• <strong>課前詞彙表</strong>：建議在每週 Coggle 中加入「Key Vocabulary」節點，列出 10-15 個核心術語及簡明定義。<br>• <strong>語速控制</strong>：多位學生明確要求放慢語速，建議在關鍵概念處刻意停頓並換句話說。<br>• <strong>GenAI 語言輔助</strong>：明確向學生示範如何用 ChatGPT/Claude 輔助理解課程內容、整理案例重點、練習英語表達。<br>• <strong>縮寫管理</strong>：有學生提到 PM 等縮寫的混淆，建議首次出現時完整拼寫並解釋。</p>
-        </div></div>
+  <!-- SECTION 3 (Page 03) -->
+  <section class="page-section section section-alt" id="sec3">
+    <div class="container">
+      <div class="section-header fade-up">
+        <div class="section-num">03 — MOTIVATION CLUSTERS</div>
+        <h2 class="section-title" data-i18n="s3-title">學習動機分群</h2>
+        <p class="section-lead" data-i18n="s3-lead">學生動機可分為四種類型，幾乎沒有學生是純粹被動的。即使起點是「因為必修」，他們大多會接著說出具體期待。</p>
       </div>
-      <div class="acc-item">
-        <div class="acc-header" onclick="toggleAcc(this)"><span data-i18n="a2-t">6.2 團隊合作優化</span><span class="acc-arrow">▾</span></div>
-        <div class="acc-body"><div class="acc-body-inner">
-          <p data-i18n="a2-b">• <strong>跨國籍組隊</strong>：充分利用班級的多元背景，讓國際生與本地生在語言與文化觀點上互補。<br>• <strong>組長支援</strong>：有學生擔任組長但明確表示需要協助，建議提供組長專用的引導清單或定期 check-in。<br>• <strong>Peer Review 引導</strong>：課綱已設計期中/期末兩次 Peer Review（佔 30%），建議在 W1-W2 就說明評分標準，降低學生焦慮。</p>
-        </div></div>
-      </div>
-      <div class="acc-item">
-        <div class="acc-header" onclick="toggleAcc(this)"><span data-i18n="a3-t">6.3 TP 執行策略</span><span class="acc-arrow">▾</span></div>
-        <div class="acc-body"><div class="acc-body-inner">
-          <p data-i18n="a3-b">• <strong>善用學生實習經驗</strong>：在 W3 介紹 TP 時讓學生分享實習經歷，作為選題靈感。<br>• <strong>結構化模板</strong>：每個 TP 階段提供明確的分析框架填寫指引，幫助 B、C 群學生有依循的路徑。<br>• <strong>碩士生引導</strong>：可建議碩士生選擇與論文相關的企業，讓 TP 成為論文的前期探索。</p>
-        </div></div>
-      </div>
-      <div class="acc-item">
-        <div class="acc-header" onclick="toggleAcc(this)"><span data-i18n="a4-t">6.4 課堂氛圍營造</span><span class="acc-arrow">▾</span></div>
-        <div class="acc-body"><div class="acc-body-inner">
-          <p data-i18n="a4-b">• 課堂初期多用小組討論而非全班點名發言，配合 TPS (Think-Pair-Share) 和 BITs 的設計降低焦慮。<br>• 營造「容許犯錯」的學習氛圍，讓學生知道英語表達不完美也沒關係。<br>• 善用 Prof. Lo 的個人魅力——多位學生因過去良好經驗而再次選修，這是強大的信任基礎。</p>
-        </div></div>
+      <div class="card-grid card-grid-2 fade-up">
+        <div class="card">
+          <div class="card-label" style="color:var(--accent-coral)">🎯</div>
+          <div class="card-title" data-i18n="m1-t">職涯驅動型</div>
+          <div class="card-body" data-i18n="m1-b">明確職業目標（金融業、海外工作、創業），期待可帶走的實戰能力。課程副標題「Become a competent Product Manager in MNCs」正好回應此需求。</div>
+        </div>
+        <div class="card">
+          <div class="card-label" style="color:var(--accent-teal)">📚</div>
+          <div class="card-title" data-i18n="m2-t">學術成長型</div>
+          <div class="card-body" data-i18n="m2-b">希望培養批判思考、將理論應用於真實案例。課程的 PBL 方法、TP 階段性報告（TP0→TP1→TP2→TP3→TP Final）提供漸進式學習路徑。</div>
+        </div>
+        <div class="card">
+          <div class="card-label" style="color:var(--accent-gold)">🗣️</div>
+          <div class="card-title" data-i18n="m3-t">語言提升型</div>
+          <div class="card-body" data-i18n="m3-b">主要目標是提升英語能力，課程內容是「載體」。D-ID 影片製作、英語口說 BA（3分鐘英語錄音）、Coursera 英語課程都是很好的練習機會。</div>
+        </div>
+        <div class="card">
+          <div class="card-label" style="color:var(--text-tertiary)">🔄</div>
+          <div class="card-title" data-i18n="m4-t">制度完成型（但非消極）</div>
+          <div class="card-body" data-i18n="m4-b">因必修而來，但多數會主動賦予課程額外意義。BA 加分機制（最高 10 分）可有效激勵這群學生超越基本要求。</div>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- SECTION 7 -->
-<section class="section section-alt" id="sec7">
-  <div class="container">
-    <div class="section-header fade-up">
-      <div class="section-num">07 — RISK ASSESSMENT</div>
-      <h2 class="section-title" data-i18n="s7-title">潛在風險與關注點</h2>
-    </div>
-    <div class="data-table-wrap fade-up">
-      <table class="data-table">
-        <thead><tr><th data-i18n="t7-h1">風險項目</th><th data-i18n="t7-h2">說明</th><th data-i18n="t7-h3">建議回應</th></tr></thead>
-        <tbody>
-          <tr><td data-i18n="t7-r1c1">英語程度落差</td><td data-i18n="t7-r1c2">進度太快會丟失 C 群，太慢會讓 A 群覺得無聊</td><td data-i18n="t7-r1c3">Coggle 報告可設不同難度的分工；BA 讓高程度學生有挑戰空間</td></tr>
-          <tr><td data-i18n="t7-r2c1">出席與補課</td><td data-i18n="t7-r2c2">有學生 W2 出國、有學生錯過 W3</td><td data-i18n="t7-r2c3">課綱已有 Self-Study Note 補課機制，可搭配 NotebookLM 自學</td></tr>
-          <tr><td data-i18n="t7-r3c1">專業縮寫混淆</td><td data-i18n="t7-r3c2">PM = Product Manager vs. Prime Minister 等</td><td data-i18n="t7-r3c3">首次出現時完整拼寫；可在 Coggle 中建立縮寫對照表</td></tr>
-          <tr><td data-i18n="t7-r4c1">聽力生理障礙</td><td data-i18n="t7-r4c2">有學生提到聽力不佳（可能為生理因素）</td><td data-i18n="t7-r4c3">特別注意語速；可考慮提供即時字幕或課後錄音/錄影</td></tr>
-          <tr><td data-i18n="t7-r5c1">對 Prof. Lo 高期待</td><td data-i18n="t7-r5c2">多位學生因過去良好經驗而再次選修</td><td data-i18n="t7-r5c3">正面優勢，但需維持一貫品質並持續帶給學生「意外的收穫」</td></tr>
-          <tr><td data-i18n="t7-r6c1">TP 選題困難</td><td data-i18n="t7-r6c2">部分學生缺乏企業分析經驗</td><td data-i18n="t7-r6c3">提供過去優良 TP 範例（課綱已列），並在 W3 引導討論</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
+  <!-- SECTION 4 (Page 04) -->
+  <section class="page-section section" id="sec4">
+    <div class="container">
+      <div class="section-header fade-up">
+        <div class="section-num">04 — EXTRACURRICULAR × TERM PROJECT</div>
+        <h2 class="section-title" data-i18n="s4-title">課外經歷與 TP 連結</h2>
+        <p class="section-lead" data-i18n="s4-lead">學生豐富的實習經歷可直接應用於 Term Project 的企業分析各階段。</p>
+      </div>
 
-<!-- MATERIALS -->
-<section class="section" id="materials">
-  <div class="container">
-    <div class="section-header fade-up">
-      <div class="section-num">APPENDIX — SOURCE MATERIALS</div>
-      <h2 class="section-title" data-i18n="mat-title">原始資料</h2>
+      <div class="data-table-wrap fade-up">
+        <table class="data-table">
+          <thead><tr><th data-i18n="t4-h1">學生經歷</th><th data-i18n="t4-h2">TP 對應主題</th><th data-i18n="t4-h3">課程週次</th></tr></thead>
+          <tbody>
+            <tr><td>Club Med 日本/馬爾地夫實習</td><td data-i18n="t4-r1c2">觀光業國際擴張策略、Geographical Expansion</td><td>W13, TP3</td></tr>
+            <tr><td>Toyota HR 實習</td><td data-i18n="t4-r2c2">跨國企業組織結構、Core Competencies</td><td>W8, TP2</td></tr>
+            <tr><td data-i18n="t4-r3c1">越南證券公司實習</td><td data-i18n="t4-r3c2">金融業 PESTEL 分析與競爭動態</td><td>W6, TP1</td></tr>
+            <tr><td data-i18n="t4-r4c1">數位行銷/品牌規劃競賽</td><td data-i18n="t4-r4c2">VPC Framework 與 Business Model</td><td>W5</td></tr>
+            <tr><td data-i18n="t4-r5c1">黑客松經驗</td><td data-i18n="t4-r5c2">MVP 與 Tech-Product-Market Fit</td><td>W8-W9</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="fade-up" style="margin-top:24px">
+        <div style="display:flex;flex-wrap:wrap;gap:4px">
+          <span class="chip chip-green">Club Med</span>
+          <span class="chip chip-teal">Toyota</span>
+          <span class="chip chip-coral">證券公司</span>
+          <span class="chip chip-gold">黑客松</span>
+          <span class="chip chip-green">行銷競賽</span>
+          <span class="chip chip-teal">UI/UX 設計</span>
+          <span class="chip chip-gold">語言學校</span>
+          <span class="chip chip-coral">旅展團隊</span>
+          <span class="chip chip-green">新加坡實習</span>
+          <span class="chip chip-teal">餐飲業</span>
+        </div>
+      </div>
     </div>
-    <div class="mat-tabs fade-up">
-      <div class="mat-tab active" onclick="showMat(0, this)" data-i18n="mat-t1">班級背景分析</div>
-      <div class="mat-tab" onclick="showMat(1, this)" data-i18n="mat-t2">課程大綱</div>
-      <div class="mat-tab" onclick="showMat(2, this)" data-i18n="mat-t3">學生問卷原始資料</div>
+  </section>
+
+  <!-- SECTION 5 (Page 05) -->
+  <section class="page-section section section-alt" id="sec5">
+    <div class="container">
+      <div class="section-header fade-up">
+        <div class="section-num">05 — EXPECTATIONS × COURSE DESIGN</div>
+        <h2 class="section-title" data-i18n="s5-title">學生期待與課程設計之契合分析</h2>
+      </div>
+
+      <div class="data-table-wrap fade-up">
+        <table class="data-table">
+          <thead><tr><th data-i18n="t5-h1">學生期待</th><th data-i18n="t5-h2">課程已有設計</th><th data-i18n="t5-h3">可強化之處</th></tr></thead>
+          <tbody>
+            <tr><td data-i18n="t5-r1c1">案例分析指導</td><td data-i18n="t5-r1c2">TP0→TP3 階段性報告，教師透過 Coggle 監看進度</td><td data-i18n="t5-r1c3">可在各 TP 階段提供結構化分析模板</td></tr>
+            <tr><td data-i18n="t5-r2c1">團隊專案回饋</td><td data-i18n="t5-r2c2">Coggle 共編讓教師/TA 可即時留言</td><td data-i18n="t5-r2c3">可建立 TP 中期檢查點</td></tr>
+            <tr><td data-i18n="t5-r3c1">系統性學習規劃</td><td data-i18n="t5-r3c2">16 週課程已有清晰進度表</td><td data-i18n="t5-r3c3">可在 W1-W2 明確呈現「學習地圖」</td></tr>
+            <tr><td data-i18n="t5-r4c1">AI 工具學習</td><td data-i18n="t5-r4c2">課綱已列入 ChatGPT/Claude/NotebookLM/D-ID 等多種工具</td><td data-i18n="t5-r4c3">可在 W2 特別強調「語言輔助」用途</td></tr>
+            <tr><td data-i18n="t5-r5c1">無壓力課堂氛圍</td><td data-i18n="t5-r5c2">Peer Review 以貢獻度而非英語正確度評分；BA 允許中英文撰寫</td><td data-i18n="t5-r5c3">課堂初期多用小組討論而非全班點名發言</td></tr>
+            <tr><td data-i18n="t5-r6c1">論文方向探索</td><td data-i18n="t5-r6c2">TP 企業分析可作為論文題目的前期探索</td><td data-i18n="t5-r6c3">可引導碩士生選擇與論文相關的企業</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="mat-content fade-up" id="matContent">
-      <pre id="matPre"></pre>
+  </section>
+
+  <!-- SECTION 6 (Page 06) -->
+  <section class="page-section section" id="sec6">
+    <div class="container">
+      <div class="section-header fade-up">
+        <div class="section-num">06 — TEACHING STRATEGIES</div>
+        <h2 class="section-title" data-i18n="s6-title">針對性教學策略建議</h2>
+      </div>
+
+      <div class="accordion fade-up">
+        <div class="acc-item open">
+          <div class="acc-header" onclick="toggleAcc(this)"><span data-i18n="a1-t">6.1 語言鷹架強化 (Language Scaffolding)</span><span class="acc-arrow">▾</span></div>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p data-i18n="a1-b">• <strong>課前詞彙表</strong>：建議在每週 Coggle 中加入「Key Vocabulary」節點，列出 10-15 個核心術語及簡明定義。<br>• <strong>語速控制</strong>：多位學生明確要求放慢語速，建議在關鍵概念處刻意停頓並換句話說。<br>• <strong>GenAI 語言輔助</strong>：明確向學生示範如何用 ChatGPT/Claude 輔助理解課程內容、整理案例重點、練習英語表達。<br>• <strong>縮寫管理</strong>：有學生提到 PM 等縮寫的混淆，建議首次出現時完整拼寫並解釋。</p>
+          </div></div>
+        </div>
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)"><span data-i18n="a2-t">6.2 團隊合作優化</span><span class="acc-arrow">▾</span></div>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p data-i18n="a2-b">• <strong>跨國籍組隊</strong>：充分利用班級的多元背景，讓國際生與本地生在語言與文化觀點上互補。<br>• <strong>組長支援</strong>：有學生擔任組長但明確表示需要協助，建議提供組長專用的引導清單或定期 check-in。<br>• <strong>Peer Review 引導</strong>：課綱已設計期中/期末兩次 Peer Review（佔 30%），建議在 W1-W2 就說明評分標準，降低學生焦慮。</p>
+          </div></div>
+        </div>
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)"><span data-i18n="a3-t">6.3 TP 執行策略</span><span class="acc-arrow">▾</span></div>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p data-i18n="a3-b">• <strong>善用學生實習經驗</strong>：在 W3 介紹 TP 時讓學生分享實習經歷，作為選題靈感。<br>• <strong>結構化模板</strong>：每個 TP 階段提供明確的分析框架填寫指引，幫助 B、C 群學生有依循的路徑。<br>• <strong>碩士生引導</strong>：可建議碩士生選擇與論文相關的企業，讓 TP 成為論文的前期探索。</p>
+          </div></div>
+        </div>
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)"><span data-i18n="a4-t">6.4 課堂氛圍營造</span><span class="acc-arrow">▾</span></div>
+          <div class="acc-body"><div class="acc-body-inner">
+            <p data-i18n="a4-b">• 課堂初期多用小組討論而非全班點名發言，配合 TPS (Think-Pair-Share) 和 BITs 的設計降低焦慮。<br>• 營造「容許犯錯」的學習氛圍，讓學生知道英語表達不完美也沒關係。<br>• 善用 Prof. Lo 的個人魅力——多位學生因過去良好經驗而再次選修，這是強大的信任基礎。</p>
+          </div></div>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <!-- SECTION 7 (Page 07) -->
+  <section class="page-section section section-alt" id="sec7">
+    <div class="container">
+      <div class="section-header fade-up">
+        <div class="section-num">07 — RISK ASSESSMENT</div>
+        <h2 class="section-title" data-i18n="s7-title">潛在風險與關注點</h2>
+      </div>
+      <div class="data-table-wrap fade-up">
+        <table class="data-table">
+          <thead><tr><th data-i18n="t7-h1">風險項目</th><th data-i18n="t7-h2">說明</th><th data-i18n="t7-h3">建議回應</th></tr></thead>
+          <tbody>
+            <tr><td data-i18n="t7-r1c1">英語程度落差</td><td data-i18n="t7-r1c2">進度太快會丟失 C 群，太慢會讓 A 群覺得無聊</td><td data-i18n="t7-r1c3">Coggle 報告可設不同難度的分工；BA 讓高程度學生有挑戰空間</td></tr>
+            <tr><td data-i18n="t7-r2c1">出席與補課</td><td data-i18n="t7-r2c2">有學生 W2 出國、有學生錯過 W3</td><td data-i18n="t7-r2c3">課綱已有 Self-Study Note 補課機制，可搭配 NotebookLM 自學</td></tr>
+            <tr><td data-i18n="t7-r3c1">專業縮寫混淆</td><td data-i18n="t7-r3c2">PM = Product Manager vs. Prime Minister 等</td><td data-i18n="t7-r3c3">首次出現時完整拼寫；可在 Coggle 中建立縮寫對照表</td></tr>
+            <tr><td data-i18n="t7-r4c1">聽力生理障礙</td><td data-i18n="t7-r4c2">有學生提到聽力不佳（可能為生理因素）</td><td data-i18n="t7-r4c3">特別注意語速；可考慮提供即時字幕或課後錄音/錄影</td></tr>
+            <tr><td data-i18n="t7-r5c1">對 Prof. Lo 高期待</td><td data-i18n="t7-r5c2">多位學生因過去良好經驗而再次選修</td><td data-i18n="t7-r5c3">正面優勢，但需維持一貫品質並持續帶給學生「意外的收穫」</td></tr>
+            <tr><td data-i18n="t7-r6c1">TP 選題困難</td><td data-i18n="t7-r6c2">部分學生缺乏企業分析經驗</td><td data-i18n="t7-r6c3">提供過去優良 TP 範例（課綱已列），並在 W3 引導討論</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- MATERIALS (Page ⊕) -->
+  <section class="page-section section" id="materials">
+    <div class="container">
+      <div class="section-header fade-up">
+        <div class="section-num">APPENDIX — SOURCE MATERIALS</div>
+        <h2 class="section-title" data-i18n="mat-title">原始資料連結與預覽</h2>
+      </div>
+      
+      <!-- Resource Link Cards -->
+      <div class="card-grid card-grid-2 fade-up" style="margin-bottom: 32px;">
+        <a href="https://drive.google.com/file/d/18XpZqkc7cxBLIxLSShyk0QvhgAZ5836m/view?usp=drive_link" target="_blank" class="card" style="text-decoration:none;">
+          <div class="card-title" data-i18n="mat-l1-t">📝 班級背景分析</div>
+          <div class="card-body" data-i18n="mat-l1-b">檢視完整的深度分析報告全文 (Google Drive PDF)</div>
+        </a>
+        <a href="https://drive.google.com/file/d/18x65wj1OxIL_KHgYBmxuZNhqcwPzj-3s/view?usp=drive_link" target="_blank" class="card" style="text-decoration:none;">
+          <div class="card-title" data-i18n="mat-l2-t">📖 課程大綱 (Syllabus)</div>
+          <div class="card-body" data-i18n="mat-l2-b">檢視本學期 SMMC-EMI 課程大綱及授課計畫 (Google Drive PDF)</div>
+        </a>
+        <a href="https://drive.google.com/file/d/1wkqX2lw-mP7Zdk66RyRuoAso6V_naqSP/view?usp=drive_link" target="_blank" class="card" style="text-decoration:none;">
+          <div class="card-title" data-i18n="mat-l3-t">📊 學生問卷原始資料 (已混排)</div>
+          <div class="card-body" data-i18n="mat-l3-b">為保護隱私，資料已混排且姓名已使用代號隱藏處理 (Google Drive PDF)</div>
+        </a>
+        <a href="https://youtube.com/playlist?list=PLjs42m2cPD1TudyEkJlIAr1fcQStZcPvw&si=oiQObnMRsCHDL1i7" target="_blank" class="card" style="text-decoration:none;">
+          <div class="card-title" data-i18n="mat-l4-t">▶️ 全班個人自介播放清單</div>
+          <div class="card-body" data-i18n="mat-l4-b">前往觀看全班學生使用 D-ID 製作的個人介紹影片 (YouTube Playlist)</div>
+        </a>
+      </div>
+
+      <div class="mat-tabs fade-up">
+        <div class="mat-tab active" onclick="showMat(0, this)" data-i18n="mat-t1">班級背景分析預覽</div>
+        <div class="mat-tab" onclick="showMat(1, this)" data-i18n="mat-t2">課程大綱預覽</div>
+        <div class="mat-tab" onclick="showMat(2, this)" data-i18n="mat-t3">學生問卷原始資料(混排版)預覽</div>
+      </div>
+      <div class="mat-content fade-up" id="matContent">
+        <pre id="matPre"></pre>
+      </div>
+    </div>
+  </section>
+
+</main>
 
 <!-- FOOTER -->
 <footer class="footer">
@@ -785,7 +810,7 @@ main {
 </footer>
 
 <!-- SCROLL TOP -->
-<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0})">↑</button>
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0, behavior: 'smooth'})">↑</button>
 
 <!-- VOICE INDICATOR -->
 <div class="voice-indicator" id="voiceInd">
@@ -794,7 +819,7 @@ main {
 </div>
 
 <script>
-// ═══ MATERIALS DATA ═══
+// ═══ MATERIALS DATA (Updated with initials for privacy) ═══
 const matData = [
 `班級背景分析：國際策略管理 EMI 課程
 Prof. Shihmin Lo (smlo@ncnu.edu.tw)
@@ -862,17 +887,17 @@ W15-W16: TP Final & Online Video Competition`,
 
 Key Student Profiles (selected):
 
-• Gisele (Indonesian): Speaks 4 languages, creative, ambitious. Wants to feel excitement of learning without burden.
-• May: Outgoing, loves travel/baseball. Wants to deepen strategic understanding and find thesis direction.
-• Philbert: Interned at Club Med Japan/Maldives. Required course, hopes to improve English and apply to career.
-• Allen: HR intern at Toyota. Wants to understand the big picture of global competition.
-• Maggie: Chose EMI to challenge herself and step out of comfort zone.
-• Kimo: Outgoing and optimistic, not afraid of showing himself. Wants to improve English communication.
-• Corrine: Returns to Prof. Lo's class for "unexpected gains" every time.
-• Tina: Introvert, music lover. Needs more vocabulary to explain thoughts and feelings.
-• Tiffany: Sees this course as the "missing piece" of the puzzle. Hearing difficulty noted.
-• William (Indonesian): Wants to build own company, needs English for financial analysis.
-• Ann (INTJ): Wants to test if Product Manager career path is suitable.
+• Student "G" (Indonesian): Speaks 4 languages, creative, ambitious. Wants to feel excitement of learning without burden.
+• Student "M": Outgoing, loves travel/baseball. Wants to deepen strategic understanding and find thesis direction.
+• Student "P": Interned at Club Med Japan/Maldives. Required course, hopes to improve English and apply to career.
+• Student "A": HR intern at Toyota. Wants to understand the big picture of global competition.
+• Student "M2": Chose EMI to challenge herself and step out of comfort zone.
+• Student "K": Outgoing and optimistic, not afraid of showing himself. Wants to improve English communication.
+• Student "C": Returns to Prof. Lo's class for "unexpected gains" every time.
+• Student "T": Introvert, music lover. Needs more vocabulary to explain thoughts and feelings.
+• Student "T2": Sees this course as the "missing piece" of the puzzle. Hearing difficulty noted.
+• Student "W" (Indonesian): Wants to build own company, needs English for financial analysis.
+• Student "A2" (INTJ): Wants to test if Product Manager career path is suitable.
 
 Common Themes in "Most Needed Assistance":
 - "English" / "English ability" / "English 😭" (most frequent)
@@ -890,20 +915,46 @@ function showMat(i, el) {
   el.classList.add('active');
 }
 
-// ═══ MENU ═══
+// ═══ MENU & PAGINATION ═══
 const menuBtn = document.getElementById('menuBtn');
 const menuOverlay = document.getElementById('menuOverlay');
 const menuPanel = document.getElementById('menuPanel');
 const menuClose = document.getElementById('menuClose');
+let currentPage = 'hero';
+
 function openMenu() { menuOverlay.classList.add('open'); menuPanel.classList.add('open'); }
 function closeMenu() { menuOverlay.classList.remove('open'); menuPanel.classList.remove('open'); }
 menuBtn.addEventListener('click', openMenu);
 menuOverlay.addEventListener('click', closeMenu);
 menuClose.addEventListener('click', closeMenu);
 
-function scrollToSection(id) {
+function switchPage(id) {
+  // Hide all pages, show target
+  document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active-page'));
+  document.getElementById(id).classList.add('active-page');
+  currentPage = id;
+  
+  // Close menu and scroll to top
   closeMenu();
-  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+  window.scrollTo(0, 0);
+
+  // Stop any ongoing speech narration when switching pages
+  speechSynth.cancel();
+  isPaused = false;
+  document.getElementById('voicePlay').style.display = 'flex';
+  document.getElementById('voicePause').style.display = 'none';
+  document.getElementById('voiceInd').classList.remove('active');
+
+  // Trigger animations for elements in the new active page
+  setTimeout(() => {
+    document.querySelectorAll(`#${id} .fade-up`).forEach(el => el.classList.add('visible'));
+  }, 50);
+  
+  // Update menu active state
+  document.querySelectorAll('.menu-item').forEach(mi => {
+    if (mi.getAttribute('onclick').includes(id)) mi.classList.add('active-nav');
+    else mi.classList.remove('active-nav');
+  });
 }
 
 // ═══ THEME ═══
@@ -914,12 +965,12 @@ document.getElementById('themeBtn').addEventListener('click', () => {
 
 // ═══ SCROLL TOP ═══
 window.addEventListener('scroll', () => {
-  document.getElementById('scrollTop').classList.toggle('show', window.scrollY > 600);
+  document.getElementById('scrollTop').classList.toggle('show', window.scrollY > 300);
 });
 
-// ═══ FADE UP ═══
+// ═══ FADE UP (Observer for content initially loaded) ═══
 const obs = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
 }, { threshold: 0.1 });
 document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
 
@@ -952,7 +1003,7 @@ const i18n = {
   'hero-m2': { zh: '個國籍', en: 'Nationalities' },
   'hero-m3': { zh: '學業階段', en: 'Academic Levels' },
   'hero-m4': { zh: '週課程', en: 'Weeks' },
-  'hero-scroll': { zh: '向下探索', en: 'Scroll to explore' },
+  'hero-scroll': { zh: '點擊開始探索', en: 'Click to start exploring' },
   'exec-title': { zh: '核心發現', en: 'Key Findings' },
   'exec-lead': { zh: '基於學生背景問卷與課程大綱的交叉分析，以下為六項關鍵發現。', en: 'Based on cross-analysis of student survey and syllabus, here are six key findings.' },
   'exec-box-title': { zh: '★ 核心發現', en: '★ Key Findings' },
@@ -977,12 +1028,20 @@ const i18n = {
   's5-title': { zh: '學生期待與課程設計之契合分析', en: 'Student Expectations × Course Design Alignment' },
   's6-title': { zh: '針對性教學策略建議', en: 'Targeted Teaching Strategy Recommendations' },
   's7-title': { zh: '潛在風險與關注點', en: 'Potential Risks & Attention Points' },
-  'mat-title': { zh: '原始資料', en: 'Source Materials' },
-  'mat-t1': { zh: '班級背景分析', en: 'Profile Analysis' },
-  'mat-t2': { zh: '課程大綱', en: 'Syllabus' },
-  'mat-t3': { zh: '學生問卷原始資料', en: 'Student Survey Data' },
+  'mat-title': { zh: '原始資料連結與預覽', en: 'Source Material Links & Preview' },
+  'mat-t1': { zh: '班級背景分析預覽', en: 'Profile Analysis Preview' },
+  'mat-t2': { zh: '課程大綱預覽', en: 'Syllabus Preview' },
+  'mat-t3': { zh: '學生問卷原始資料(混排版)預覽', en: 'Survey Data (Anonymized) Preview' },
+  'mat-l1-t': { zh: '📝 班級背景分析', en: '📝 Profile Analysis Report' },
+  'mat-l1-b': { zh: '檢視完整的深度分析報告全文 (Google Drive PDF)', en: 'View the full in-depth analysis report (Google Drive PDF)' },
+  'mat-l2-t': { zh: '📖 課程大綱 (Syllabus)', en: '📖 Course Syllabus' },
+  'mat-l2-b': { zh: '檢視本學期 SMMC-EMI 課程大綱及授課計畫 (Google Drive PDF)', en: 'View the current semester SMMC-EMI syllabus (Google Drive PDF)' },
+  'mat-l3-t': { zh: '📊 學生問卷原始資料 (已混排)', en: '📊 Raw Survey Data (Anonymized)' },
+  'mat-l3-b': { zh: '為保護隱私，資料已混排且姓名已使用代號隱藏處理 (Google Drive PDF)', en: 'Data randomized and names replaced with initials for privacy (Google Drive PDF)' },
+  'mat-l4-t': { zh: '▶️ 全班個人自介播放清單', en: '▶️ Self-Intro Video Playlist' },
+  'mat-l4-b': { zh: '前往觀看全班學生使用 D-ID 製作的個人介紹影片 (YouTube Playlist)', en: 'Watch students\' D-ID self-introduction videos (YouTube Playlist)' },
   'footer-copy': { zh: '© 2026 NCNU IBS. All rights reserved.', en: '© 2026 NCNU IBS. All rights reserved.' },
-  // Table headers and cells for EN
+  // Table headers and cells
   's1-c1-label': { zh: '國籍背景', en: 'NATIONALITY' },
   's1-c1-title': { zh: '跨文化課堂環境', en: 'Cross-cultural Classroom' },
   's1-c1-body': { zh: '學生包含來自印尼、緬甸的國際生與僑生，以及台灣本地學生。國際生通常英語較強但中文較弱，本地生則反之，形成互補潛力。與課綱第 III.A.1 條強調的「多元背景分組以促進同儕學習」目標高度契合。', en: 'Students include international students from Indonesia and Myanmar, as well as local Taiwanese students. International students are typically stronger in English but weaker in Chinese, and vice versa, creating complementary potential. Highly aligned with the syllabus III.A.1 goal of diverse group formation for peer learning.' },
@@ -992,11 +1051,11 @@ const i18n = {
   'm1-t': { zh: '職涯驅動型', en: 'Career-Driven' },
   'm1-b': { zh: '明確職業目標（金融業、海外工作、創業），期待可帶走的實戰能力。課程副標題「Become a competent Product Manager in MNCs」正好回應此需求。', en: 'Clear career goals (finance, overseas work, entrepreneurship), expecting practical skills. The course subtitle "Become a competent Product Manager in MNCs" directly addresses this need.' },
   'm2-t': { zh: '學術成長型', en: 'Academic Growth' },
-  'm2-b': { zh: '希望培養批判思考、將理論應用於真實案例。課程的 PBL 方法、TP 階段性報告（TP0→TP1→TP2→TP3→TP Final）提供漸進式學習路徑。', en: 'Hopes to develop critical thinking and apply theory to real cases. The PBL method and phased TP reports (TP0→TP1→TP2→TP3→TP Final) provide a progressive learning path.' },
+  'm2-b': { zh: '希望培養批判思考、將理論應用於真實案例。課程的 PBL 方法、TP 階段性報告提供漸進式學習路徑。', en: 'Hopes to develop critical thinking and apply theory to real cases. The PBL method and phased TP reports provide a progressive learning path.' },
   'm3-t': { zh: '語言提升型', en: 'Language Enhancement' },
-  'm3-b': { zh: '主要目標是提升英語能力，課程內容是「載體」。D-ID 影片製作、英語口說 BA（3分鐘英語錄音）、Coursera 英語課程都是很好的練習機會。', en: 'Primary goal is English improvement; course content is the "vehicle." D-ID video production, English-speaking BA (3-min recording), and Coursera courses provide excellent practice.' },
+  'm3-b': { zh: '主要目標是提升英語能力，課程內容是「載體」。D-ID 影片製作、英語口說 BA、Coursera 英語課程都是很好的練習機會。', en: 'Primary goal is English improvement; course content is the "vehicle." D-ID video production, English-speaking BA, and Coursera courses provide excellent practice.' },
   'm4-t': { zh: '制度完成型（但非消極）', en: 'Requirement-Driven (not passive)' },
-  'm4-b': { zh: '因必修而來，但多數會主動賦予課程額外意義。BA 加分機制（最高 10 分）可有效激勵這群學生超越基本要求。', en: 'Enrolled because it\'s required, but most actively seek additional meaning. The BA bonus mechanism (up to 10 points) effectively motivates these students beyond basic requirements.' },
+  'm4-b': { zh: '因必修而來，但多數會主動賦予課程額外意義。BA 加分機制可有效激勵這群學生超越基本要求。', en: 'Enrolled because it\'s required, but most actively seek additional meaning. The BA bonus mechanism effectively motivates these students beyond basic requirements.' },
   'b-a': { zh: 'A群：相對有信心', en: 'Group A: Relatively Confident' },
   'b-b': { zh: 'B群：願意挑戰但焦慮', en: 'Group B: Willing but Anxious' },
   'b-c': { zh: 'C群：明確障礙', en: 'Group C: Clear Barrier' },
@@ -1004,92 +1063,87 @@ const i18n = {
   'a2-t': { zh: '6.2 團隊合作優化', en: '6.2 Team Collaboration Optimization' },
   'a3-t': { zh: '6.3 TP 執行策略', en: '6.3 Term Project Execution Strategy' },
   'a4-t': { zh: '6.4 課堂氛圍營造', en: '6.4 Classroom Atmosphere Building' },
-  'a1-b': { zh: '• <strong>課前詞彙表</strong>：建議在每週 Coggle 中加入「Key Vocabulary」節點，列出 10-15 個核心術語及簡明定義。<br>• <strong>語速控制</strong>：多位學生明確要求放慢語速，建議在關鍵概念處刻意停頓並換句話說。<br>• <strong>GenAI 語言輔助</strong>：明確向學生示範如何用 ChatGPT/Claude 輔助理解課程內容、整理案例重點、練習英語表達。<br>• <strong>縮寫管理</strong>：有學生提到 PM 等縮寫的混淆，建議首次出現時完整拼寫並解釋。', en: '• <strong>Pre-class Vocabulary</strong>: Add "Key Vocabulary" nodes in weekly Coggle with 10-15 core terms and definitions.<br>• <strong>Speech Pace</strong>: Multiple students requested slower speech; pause deliberately at key concepts.<br>• <strong>GenAI Language Aid</strong>: Demonstrate how to use ChatGPT/Claude for content comprehension and English practice.<br>• <strong>Abbreviation Management</strong>: Spell out abbreviations fully on first use (PM confusion noted).' },
-  'a2-b': { zh: '• <strong>跨國籍組隊</strong>：充分利用班級的多元背景，讓國際生與本地生在語言與文化觀點上互補。<br>• <strong>組長支援</strong>：有學生擔任組長但明確表示需要協助，建議提供組長專用的引導清單或定期 check-in。<br>• <strong>Peer Review 引導</strong>：課綱已設計期中/期末兩次 Peer Review（佔 30%），建議在 W1-W2 就說明評分標準，降低學生焦慮。', en: '• <strong>Cross-national Teams</strong>: Leverage diverse backgrounds for language and cultural complementarity.<br>• <strong>Team Leader Support</strong>: Provide guidance checklists and regular check-ins for team leaders who expressed need for assistance.<br>• <strong>Peer Review Guidance</strong>: Explain the 30% Peer Review criteria early in W1-W2 to reduce anxiety.' },
-  'a3-b': { zh: '• <strong>善用學生實習經驗</strong>：在 W3 介紹 TP 時讓學生分享實習經歷，作為選題靈感。<br>• <strong>結構化模板</strong>：每個 TP 階段提供明確的分析框架填寫指引，幫助 B、C 群學生有依循的路徑。<br>• <strong>碩士生引導</strong>：可建議碩士生選擇與論文相關的企業，讓 TP 成為論文的前期探索。', en: '• <strong>Leverage Internship Experience</strong>: Let students share experiences in W3 for TP topic inspiration.<br>• <strong>Structured Templates</strong>: Provide clear analytical framework guides for each TP stage.<br>• <strong>Master\'s Student Guidance</strong>: Suggest selecting thesis-related companies for TP as preliminary research.' },
-  'a4-b': { zh: '• 課堂初期多用小組討論而非全班點名發言，配合 TPS (Think-Pair-Share) 和 BITs 的設計降低焦慮。<br>• 營造「容許犯錯」的學習氛圍，讓學生知道英語表達不完美也沒關係。<br>• 善用 Prof. Lo 的個人魅力——多位學生因過去良好經驗而再次選修，這是強大的信任基礎。', en: '• Use small-group discussions early on instead of cold-calling, leveraging TPS and BITs to reduce anxiety.<br>• Create a "mistakes are welcome" atmosphere so students know imperfect English is acceptable.<br>• Leverage Prof. Lo\'s personal rapport — multiple students re-enrolled based on past positive experiences.' },
-  // ═══ Table 1: Academic Stage ═══
+  'a1-b': { zh: '• <strong>課前詞彙表</strong>：建議在每週 Coggle 中加入「Key Vocabulary」節點，列出 10-15 個核心術語及簡明定義。<br>• <strong>語速控制</strong>：多位學生明確要求放慢語速，建議在關鍵概念處刻意停頓並換句話說。<br>• <strong>GenAI 語言輔助</strong>：明確向學生示範如何用 ChatGPT/Claude 輔助理解課程內容、整理案例重點、練習英語表達。<br>• <strong>縮寫管理</strong>：有學生提到 PM 等縮寫的混淆，建議首次出現時完整拼寫並解釋。', en: '• <strong>Pre-class Vocabulary</strong>: Add "Key Vocabulary" nodes in weekly Coggle with 10-15 core terms.<br>• <strong>Speech Pace</strong>: Multiple students requested slower speech; pause deliberately at key concepts.<br>• <strong>GenAI Language Aid</strong>: Demonstrate how to use ChatGPT/Claude for content comprehension.<br>• <strong>Abbreviation Management</strong>: Spell out abbreviations fully on first use.' },
+  'a2-b': { zh: '• <strong>跨國籍組隊</strong>：充分利用班級的多元背景，讓國際生與本地生在語言與文化觀點上互補。<br>• <strong>組長支援</strong>：有學生擔任組長但明確表示需要協助，建議提供組長專用的引導清單或定期 check-in。<br>• <strong>Peer Review 引導</strong>：課綱已設計期中/期末兩次 Peer Review（佔 30%），建議在 W1-W2 就說明評分標準，降低學生焦慮。', en: '• <strong>Cross-national Teams</strong>: Leverage diverse backgrounds for language and cultural complementarity.<br>• <strong>Team Leader Support</strong>: Provide guidance checklists and regular check-ins for team leaders.<br>• <strong>Peer Review Guidance</strong>: Explain the 30% Peer Review criteria early in W1-W2 to reduce anxiety.' },
+  'a3-b': { zh: '• <strong>善用學生實習經驗</strong>：在 W3 介紹 TP 時讓學生分享實習經歷，作為選題靈感。<br>• <strong>結構化模板</strong>：每個 TP 階段提供明確的分析框架填寫指引，幫助 B、C 群學生有依循的路徑。<br>• <strong>碩士生引導</strong>：可建議碩士生選擇與論文相關的企業，讓 TP 成為論文的前期探索。', en: '• <strong>Leverage Internship Experience</strong>: Let students share experiences in W3 for TP topic inspiration.<br>• <strong>Structured Templates</strong>: Provide clear analytical framework guides for each TP stage.<br>• <strong>Master\'s Student Guidance</strong>: Suggest selecting thesis-related companies for TP.' },
+  'a4-b': { zh: '• 課堂初期多用小組討論而非全班點名發言，配合 TPS (Think-Pair-Share) 和 BITs 的設計降低焦慮。<br>• 營造「容許犯錯」的學習氛圍，讓學生知道英語表達不完美也沒關係。<br>• 善用 Prof. Lo 的個人魅力——多位學生因過去良好經驗而再次選修，這是強大的信任基礎。', en: '• Use small-group discussions early on instead of cold-calling, leveraging TPS to reduce anxiety.<br>• Create a "mistakes are welcome" atmosphere so students know imperfect English is acceptable.<br>• Leverage Prof. Lo\'s personal rapport — multiple students re-enrolled based on past positive experiences.' },
   't1-h1': { zh: '學業階段', en: 'Academic Level' },
   't1-h2': { zh: '特徵', en: 'Characteristics' },
   't1-h3': { zh: '與課程的連結', en: 'Course Alignment' },
   't1-r1c1': { zh: '大三/大四生', en: 'Junior / Senior' },
-  't1-r1c2': { zh: '正在探索職涯方向，部分為五年一貫學碩生', en: 'Exploring career paths; some in 5-year integrated programs' },
-  't1-r1c3': { zh: '可透過 TP 提前接觸策略分析實務；過程即為 PM 能力訓練', en: 'TP provides early exposure to strategic analysis; the process itself is PM competency training' },
+  't1-r1c2': { zh: '正在探索職涯方向，部分為五年一貫學碩生', en: 'Exploring career paths; some in 5-year programs' },
+  't1-r1c3': { zh: '可透過 TP 提前接觸策略分析實務；過程即為 PM 能力訓練', en: 'TP provides early exposure to strategic analysis' },
   't1-r2c1': { zh: '碩一生', en: '1st-year Master\'s' },
-  't1-r2c2': { zh: '剛進研究所，希望銜接學術與實務', en: 'Newly enrolled; seeking to bridge academic theory and practice' },
-  't1-r2c3': { zh: 'Coursera 證書課程 (ENT/CS) 可補強理論基礎', en: 'Coursera certificate courses (ENT/CS) can reinforce theoretical foundations' },
+  't1-r2c2': { zh: '剛進研究所，希望銜接學術與實務', en: 'Newly enrolled; seeking to bridge theory and practice' },
+  't1-r2c3': { zh: 'Coursera 證書課程 (ENT/CS) 可補強理論基礎', en: 'Coursera (ENT/CS) reinforces theory' },
   't1-r3c1': { zh: '碩二生', en: '2nd-year Master\'s' },
   't1-r3c2': { zh: '即將畢業，需要整合所學', en: 'About to graduate; needs to integrate all learning' },
-  't1-r3c3': { zh: 'TP Final 的 SPA 報告可直接轉化為論文素材', en: 'TP Final SPA report can be directly converted into thesis material' },
-  // ═══ Table 2: English Proficiency ═══
+  't1-r3c3': { zh: 'TP Final 的 SPA 報告可直接轉化為論文素材', en: 'TP Final SPA report becomes thesis material' },
   't2-h1': { zh: '分群', en: 'Group' },
   't2-h2': { zh: '特徵描述', en: 'Description' },
   't2-h3': { zh: '課程設計對應', en: 'Course Design Response' },
-  't2-r1c1': { zh: 'A群：相對有信心', en: 'Group A: Relatively Confident' },
-  't2-r1c2': { zh: '多為國際生/僑生，焦慮在學術詞彙深度', en: 'Mostly international/overseas students; anxiety lies in academic vocabulary depth' },
-  't2-r1c3': { zh: '可充分發揮於 Coggle 報告、Q&A 組織、幫助組員', en: 'Can fully contribute to Coggle presentations, Q&A facilitation, and supporting teammates' },
-  't2-r2c1': { zh: 'B群：願意挑戰但焦慮', en: 'Group B: Willing but Anxious' },
-  't2-r2c2': { zh: '最大群體；主動選擇 EMI 突破舒適圈，但對聽說讀感到不安', en: 'Largest group; proactively chose EMI to push boundaries, but anxious about listening, speaking, and reading' },
-  't2-r2c3': { zh: 'Flipped Classroom 課前預習可降低課堂認知負荷', en: 'Flipped Classroom pre-class preparation reduces in-class cognitive load' },
-  't2-r3c1': { zh: 'C群：英語為明確障礙', en: 'Group C: English as Clear Barrier' },
-  't2-r3c2': { zh: '依賴即時翻譯，希望偶爾用中文', en: 'Relies on real-time translation; hopes for occasional Chinese assistance' },
-  't2-r3c3': { zh: 'GenAI 工具可作為即時語言輔助；BA 可用中文撰寫', en: 'GenAI tools serve as real-time language aid; BA submissions can be in Chinese' },
-  // ═══ Table 4: Experience × TP ═══
+  't2-r1c1': { zh: 'A群：相對有信心', en: 'Group A: Confident' },
+  't2-r1c2': { zh: '多為國際生/僑生，焦慮在學術詞彙深度', en: 'Mostly international students; anxious about academic vocab' },
+  't2-r1c3': { zh: '可充分發揮於 Coggle 報告、Q&A 組織、幫助組員', en: 'Can contribute to Coggle, Q&A, and helping teammates' },
+  't2-r2c1': { zh: 'B群：願意挑戰但焦慮', en: 'Group B: Willing/Anxious' },
+  't2-r2c2': { zh: '最大群體；主動選擇 EMI 突破舒適圈，但對聽說讀感到不安', en: 'Largest group; chose EMI to push boundaries, but anxious' },
+  't2-r2c3': { zh: 'Flipped Classroom 課前預習可降低課堂認知負荷', en: 'Flipped Classroom prep reduces cognitive load' },
+  't2-r3c1': { zh: 'C群：明確障礙', en: 'Group C: Clear Barrier' },
+  't2-r3c2': { zh: '依賴即時翻譯，希望偶爾用中文', en: 'Relies on translation; hopes for Chinese assistance' },
+  't2-r3c3': { zh: 'GenAI 工具可作為即時語言輔助；BA 可用中文撰寫', en: 'GenAI tools act as language aid; BA can be in Chinese' },
   't4-h1': { zh: '學生經歷', en: 'Student Experience' },
   't4-h2': { zh: 'TP 對應主題', en: 'TP Corresponding Topic' },
-  't4-h3': { zh: '課程週次', en: 'Course Week' },
-  't4-r1c2': { zh: '觀光業國際擴張策略、Geographical Expansion', en: 'Tourism international expansion, Geographical Expansion' },
-  't4-r2c2': { zh: '跨國企業組織結構、Core Competencies', en: 'MNC organizational structure, Core Competencies' },
-  't4-r3c1': { zh: '越南證券公司實習', en: 'Securities firm internship in Vietnam' },
-  't4-r3c2': { zh: '金融業 PESTEL 分析與競爭動態', en: 'Financial industry PESTEL analysis and competitive dynamics' },
-  't4-r4c1': { zh: '數位行銷/品牌規劃競賽', en: 'Digital marketing / brand planning competition' },
+  't4-h3': { zh: '課程週次', en: 'Week' },
+  't4-r1c2': { zh: '觀光業國際擴張策略、Geographical Expansion', en: 'Tourism expansion, Geographical Expansion' },
+  't4-r2c2': { zh: '跨國企業組織結構、Core Competencies', en: 'MNC structure, Core Competencies' },
+  't4-r3c1': { zh: '越南證券公司實習', en: 'Securities internship in Vietnam' },
+  't4-r3c2': { zh: '金融業 PESTEL 分析與競爭動態', en: 'Finance PESTEL & competitive dynamics' },
+  't4-r4c1': { zh: '數位行銷/品牌規劃競賽', en: 'Digital marketing / brand competition' },
   't4-r4c2': { zh: 'VPC Framework 與 Business Model', en: 'VPC Framework & Business Model' },
   't4-r5c1': { zh: '黑客松經驗', en: 'Hackathon experience' },
   't4-r5c2': { zh: 'MVP 與 Tech-Product-Market Fit', en: 'MVP & Tech-Product-Market Fit' },
-  // ═══ Table 5: Expectations × Course Design ═══
   't5-h1': { zh: '學生期待', en: 'Student Expectation' },
   't5-h2': { zh: '課程已有設計', en: 'Existing Course Design' },
   't5-h3': { zh: '可強化之處', en: 'Potential Enhancement' },
   't5-r1c1': { zh: '案例分析指導', en: 'Case study guidance' },
-  't5-r1c2': { zh: 'TP0→TP3 階段性報告，教師透過 Coggle 監看進度', en: 'Phased TP0→TP3 reports; instructor monitors progress via Coggle' },
-  't5-r1c3': { zh: '可在各 TP 階段提供結構化分析模板', en: 'Provide structured analysis templates at each TP stage' },
+  't5-r1c2': { zh: 'TP0→TP3 階段性報告，教師透過 Coggle 監看進度', en: 'Phased TP reports; instructor monitors via Coggle' },
+  't5-r1c3': { zh: '可在各 TP 階段提供結構化分析模板', en: 'Provide structured templates at each stage' },
   't5-r2c1': { zh: '團隊專案回饋', en: 'Team project feedback' },
-  't5-r2c2': { zh: 'Coggle 共編讓教師/TA 可即時留言', en: 'Coggle co-editing allows instructor/TA real-time comments' },
+  't5-r2c2': { zh: 'Coggle 共編讓教師/TA 可即時留言', en: 'Coggle co-editing allows real-time comments' },
   't5-r2c3': { zh: '可建立 TP 中期檢查點', en: 'Establish TP mid-stage checkpoints' },
   't5-r3c1': { zh: '系統性學習規劃', en: 'Systematic learning plan' },
-  't5-r3c2': { zh: '16 週課程已有清晰進度表', en: '16-week course already has a clear schedule' },
+  't5-r3c2': { zh: '16 週課程已有清晰進度表', en: '16-week course has a clear schedule' },
   't5-r3c3': { zh: '可在 W1-W2 明確呈現「學習地圖」', en: 'Present a clear "learning map" in W1-W2' },
   't5-r4c1': { zh: 'AI 工具學習', en: 'AI tools learning' },
-  't5-r4c2': { zh: '課綱已列入 ChatGPT/Claude/NotebookLM/D-ID 等多種工具', en: 'Syllabus includes ChatGPT/Claude/NotebookLM/D-ID and more' },
-  't5-r4c3': { zh: '可在 W2 特別強調「語言輔助」用途', en: 'Emphasize "language assistance" use cases in W2' },
-  't5-r5c1': { zh: '無壓力課堂氛圍', en: 'Low-pressure classroom atmosphere' },
-  't5-r5c2': { zh: 'Peer Review 以貢獻度而非英語正確度評分；BA 允許中英文撰寫', en: 'Peer Review scores contribution, not English accuracy; BA allows bilingual submissions' },
-  't5-r5c3': { zh: '課堂初期多用小組討論而非全班點名發言', en: 'Use small-group discussions early instead of cold-calling' },
+  't5-r4c2': { zh: '課綱已列入 ChatGPT/Claude/NotebookLM/D-ID 等多種工具', en: 'Syllabus includes ChatGPT/Claude/NotebookLM/D-ID' },
+  't5-r4c3': { zh: '可在 W2 特別強調「語言輔助」用途', en: 'Emphasize "language assistance" use cases' },
+  't5-r5c1': { zh: '無壓力課堂氛圍', en: 'Low-pressure atmosphere' },
+  't5-r5c2': { zh: 'Peer Review 以貢獻度而非英語正確度評分；BA 允許中英文撰寫', en: 'Peer Review scores contribution, not English accuracy' },
+  't5-r5c3': { zh: '課堂初期多用小組討論而非全班點名發言', en: 'Use small-group discussions instead of cold-calling' },
   't5-r6c1': { zh: '論文方向探索', en: 'Thesis direction exploration' },
-  't5-r6c2': { zh: 'TP 企業分析可作為論文題目的前期探索', en: 'TP corporate analysis serves as preliminary thesis exploration' },
+  't5-r6c2': { zh: 'TP 企業分析可作為論文題目的前期探索', en: 'TP analysis serves as preliminary thesis exploration' },
   't5-r6c3': { zh: '可引導碩士生選擇與論文相關的企業', en: 'Guide master\'s students to select thesis-related companies' },
-  // ═══ Table 7: Risks ═══
   't7-h1': { zh: '風險項目', en: 'Risk Item' },
   't7-h2': { zh: '說明', en: 'Description' },
   't7-h3': { zh: '建議回應', en: 'Recommended Response' },
-  't7-r1c1': { zh: '英語程度落差', en: 'English proficiency gap' },
+  't7-r1c1': { zh: '英語程度落差', en: 'English gap' },
   't7-r1c2': { zh: '進度太快會丟失 C 群，太慢會讓 A 群覺得無聊', en: 'Too fast loses Group C; too slow bores Group A' },
-  't7-r1c3': { zh: 'Coggle 報告可設不同難度的分工；BA 讓高程度學生有挑戰空間', en: 'Coggle reports can assign varying difficulty levels; BA gives advanced students extra challenge' },
+  't7-r1c3': { zh: 'Coggle 報告可設不同難度的分工；BA 讓高程度學生有挑戰空間', en: 'Coggle assigns varying difficulty; BA gives extra challenge' },
   't7-r2c1': { zh: '出席與補課', en: 'Attendance & catch-up' },
-  't7-r2c2': { zh: '有學生 W2 出國、有學生錯過 W3', en: 'Some students travel abroad in W2; others missed W3' },
-  't7-r2c3': { zh: '課綱已有 Self-Study Note 補課機制，可搭配 NotebookLM 自學', en: 'Syllabus already has Self-Study Note mechanism; combine with NotebookLM for self-learning' },
+  't7-r2c2': { zh: '有學生 W2 出國、有學生錯過 W3', en: 'Students travel abroad or miss classes' },
+  't7-r2c3': { zh: '課綱已有 Self-Study Note 補課機制，可搭配 NotebookLM 自學', en: 'Syllabus has Self-Study Note mechanism; combine with NotebookLM' },
   't7-r3c1': { zh: '專業縮寫混淆', en: 'Abbreviation confusion' },
   't7-r3c2': { zh: 'PM = Product Manager vs. Prime Minister 等', en: 'PM = Product Manager vs. Prime Minister, etc.' },
-  't7-r3c3': { zh: '首次出現時完整拼寫；可在 Coggle 中建立縮寫對照表', en: 'Spell out fully on first use; build abbreviation glossary in Coggle' },
+  't7-r3c3': { zh: '首次出現時完整拼寫；可在 Coggle 中建立縮寫對照表', en: 'Spell out fully on first use; build abbreviation glossary' },
   't7-r4c1': { zh: '聽力生理障礙', en: 'Hearing impairment' },
-  't7-r4c2': { zh: '有學生提到聽力不佳（可能為生理因素）', en: 'A student mentioned poor hearing (possibly physiological)' },
-  't7-r4c3': { zh: '特別注意語速；可考慮提供即時字幕或課後錄音/錄影', en: 'Pay special attention to speech pace; consider live subtitles or post-class recordings' },
-  't7-r5c1': { zh: '對 Prof. Lo 高期待', en: 'High expectations for Prof. Lo' },
+  't7-r4c2': { zh: '有學生提到聽力不佳（可能為生理因素）', en: 'A student mentioned poor hearing' },
+  't7-r4c3': { zh: '特別注意語速；可考慮提供即時字幕或課後錄音/錄影', en: 'Attention to pace; consider live subtitles or recordings' },
+  't7-r5c1': { zh: '對 Prof. Lo 高期待', en: 'High expectations' },
   't7-r5c2': { zh: '多位學生因過去良好經驗而再次選修', en: 'Multiple students re-enrolled based on past positive experiences' },
-  't7-r5c3': { zh: '正面優勢，但需維持一貫品質並持續帶給學生「意外的收穫」', en: 'A positive advantage, but must maintain consistent quality and keep delivering "unexpected gains"' },
-  't7-r6c1': { zh: 'TP 選題困難', en: 'TP topic selection difficulty' },
-  't7-r6c2': { zh: '部分學生缺乏企業分析經驗', en: 'Some students lack corporate analysis experience' },
-  't7-r6c3': { zh: '提供過去優良 TP 範例（課綱已列），並在 W3 引導討論', en: 'Provide past excellent TP examples (already listed in syllabus) and guide discussion in W3' },
+  't7-r5c3': { zh: '正面優勢，但需維持一貫品質並持續帶給學生「意外的收穫」', en: 'A positive advantage, must maintain consistent quality' },
+  't7-r6c1': { zh: 'TP 選題困難', en: 'TP topic difficulty' },
+  't7-r6c2': { zh: '部分學生缺乏企業分析經驗', en: 'Some lack corporate analysis experience' },
+  't7-r6c3': { zh: '提供過去優良 TP 範例（課綱已列），並在 W3 引導討論', en: 'Provide past excellent TP examples and guide discussion' },
 };
 
 document.getElementById('langBtn').addEventListener('click', () => {
@@ -1101,13 +1155,54 @@ document.getElementById('langBtn').addEventListener('click', () => {
   });
 });
 
-// ═══ VOICE NARRATION (Web Speech API) ═══
+// ═══ PAGE-SPECIFIC VOICE NARRATION (Web Speech API) ═══
 let speechSynth = window.speechSynthesis;
 let currentUtterance = null;
 let isPaused = false;
 
-const narrativeZh = `歡迎閱讀 SMMC-EMI 班級背景分析報告。本報告基於1142學期國際策略管理全英授課課程學生問卷進行深度分析。核心發現如下：第一，超過百分之七十的學生提及英語能力焦慮，但課程已融入多種AI工具作為語言支援。第二，學生組成多元，涵蓋大三至碩二，本地生與國際生兼備。第三，學習動機普遍積極，即使是必修課仍有額外期待。第四，學生課外經歷豐富，可直接應用於學期專案。第五，課程已內建翻轉教室等多種教學機制。第六，最大挑戰在於平衡全英語授課品質與降低語言障礙。`;
-const narrativeEn = `Welcome to the SMMC-EMI Student Profile Analysis Report. This report provides an in-depth analysis based on student surveys from the 1142 semester International Strategic Management EMI course. Key findings include: First, over seventy percent of students expressed anxiety about English proficiency, though the syllabus has integrated GenAI tools for language support. Second, student composition is diverse, spanning juniors to second-year master's students with multiple nationalities. Third, learning motivation is generally active even for a required course. Fourth, students have rich extracurricular experiences directly applicable to Term Projects. Fifth, the course has built-in mechanisms including Flipped Classroom and Problem-Based Learning. Sixth, the biggest challenge is balancing EMI quality with reducing language barriers.`;
+// Dictionary holding narrative text for each page section ID
+const pageNarrations = {
+  hero: {
+    zh: "歡迎閱讀 SMMC-EMI 班級背景分析報告。本報告基於國際策略管理全英授課課程學生問卷進行深度分析，並交叉對照課程大綱，提出教學策略建議。請透過左上方導覽選單瀏覽各個分頁。",
+    en: "Welcome to the SMMC-EMI Student Profile Analysis Report. This report provides an in-depth analysis based on the student survey and course syllabus. Please use the navigation menu on the top left to explore the chapters."
+  },
+  exec: {
+    zh: "核心發現摘要。基於問卷與課綱的交叉分析，我們得出六項主要結論：第一，英語能力是學生最大的焦慮。第二，學生組成與國籍皆相當多元。第三，學習動機普遍積極。第四，學生擁有豐富的實務經驗。第五，目前課程已內建強大的教學鷹架。第六，主要挑戰在於如何在確保全英語授課品質的同時，降低學生的語言障礙。",
+    en: "Executive Summary. Based on cross-analysis, we have six key findings: First, English proficiency is the main anxiety. Second, student composition is highly diverse. Third, learning motivation is active. Fourth, students have rich practical experiences. Fifth, the course has built-in teaching scaffolds. Sixth, the main challenge is balancing EMI quality with language barriers."
+  },
+  sec1: {
+    zh: "第一章，學生組成分析。本班級約有三十多位學生，主要來自國際企業學系。國籍背景多元，包含印尼、緬甸等國際生與台灣本地生，形成跨文化的課堂環境。學業階段則涵蓋了正在探索職涯的大三大四生、以及需要銜接學術與實務的碩士生。",
+    en: "Chapter 1, Student Composition. The class consists of over 30 students, mainly from International Business. Nationalities are diverse, including Indonesian, Myanmar, and local Taiwanese students, creating a cross-cultural environment. Academic levels range from juniors exploring careers to master's students bridging academia and practice."
+  },
+  sec2: {
+    zh: "第二章，英語能力與需求評估。英語能力是整份資料中最鮮明的焦慮。對英語相對有信心的A群約佔百分之二十三。願意挑戰但感到不安的B群為最大宗，佔了百分之五十五。而將英語視為明確障礙的C群約佔百分之二十二。好在課程大綱已經準備了多種生成式AI工具來協助他們。",
+    en: "Chapter 2, English Proficiency. English is the most prominent anxiety. Group A, relatively confident, accounts for 23%. Group B, willing but anxious, is the largest at 55%. Group C, facing clear barriers, is 22%. Fortunately, the syllabus has integrated GenAI tools to assist them."
+  },
+  sec3: {
+    zh: "第三章，學習動機分群。學生的動機可歸納為四種類型：期望進入金融或海外工作的職涯驅動型、希望培養批判思考的學術成長型、以提升英語為首要目標的語言提升型、以及雖然因為必修而來但仍積極尋找價值的制度完成型。",
+    en: "Chapter 3, Motivation Clusters. Motivations are grouped into four types: Career-driven for finance or overseas work, Academic growth for critical thinking, Language enhancement as a primary goal, and Requirement-driven but proactively seeking value."
+  },
+  sec4: {
+    zh: "第四章，課外經歷與期末專案連結。學生具備非常豐富的課外經驗，包含了 Club Med 飯店實習、車廠人資、證券公司實習，還有數位行銷競賽與黑客松經驗。這些實務背景可以直接轉化為期末專案與課堂討論的絕佳素材。",
+    en: "Chapter 4, Extracurricular Experience and Term Project. Students have rich experiences, including internships at Club Med, Toyota HR, securities firms, and hackathons. These practical backgrounds can directly serve as excellent materials for term projects and class discussions."
+  },
+  sec5: {
+    zh: "第五章，學生期待與課程設計之契合分析。學生的核心期待包含案例分析指導、系統性學習以及AI工具的學習。令人振奮的是，本學期的課程大綱已經透過 Coggle、GenAI 工具以及階段性的期末專案設計，完美呼應了學生的需求。",
+    en: "Chapter 5, Expectations and Course Design. Student expectations include case study guidance, systematic learning, and AI tool usage. Excitingly, the current syllabus perfectly addresses these needs through Coggle, GenAI tools, and phased term project designs."
+  },
+  sec6: {
+    zh: "第六章，針對性教學策略建議。我們提出四個方向：第一，透過課前詞彙表與放慢語速來強化語言鷹架。第二，透過跨國籍組隊來優化團隊合作。第三，提供結構化模板來協助專案執行。第四，初期多使用小組討論，營造容許犯錯的無壓力課堂氛圍。",
+    en: "Chapter 6, Teaching Strategies. We propose four directions: First, enhance language scaffolding using pre-class vocabulary and slower speech. Second, optimize team collaboration via cross-national groups. Third, provide structured templates for project execution. Fourth, use small group discussions to foster a low-pressure atmosphere."
+  },
+  sec7: {
+    zh: "第七章，潛在風險與關注點。需特別留意英語程度落差過大導致的進度問題、部分學生出國請假的補課需求、類似 PM 這種專業縮寫可能造成的認知混淆，以及特定學生的聽力生理障礙。這些皆可透過提早設計的行政與教學機制來化解。",
+    en: "Chapter 7, Risk Assessment. Special attention is needed for progress issues caused by English proficiency gaps, make-up classes for traveling students, cognitive confusion over abbreviations like 'PM', and physiological hearing impairments. These can be resolved with proactive administrative mechanisms."
+  },
+  materials: {
+    zh: "最後的附錄章節，原始資料連結與預覽。您可以在此分頁中，點擊卡片連結前往 Google Drive 與 YouTube 檢視完整的班級背景分析報告、課程大綱、基於隱私保護重新混排並使用代號的學生問卷資料，以及全班的個人自介播放清單。",
+    en: "Final appendix chapter, Source Material Links. In this page, you can click the cards to access the full profile analysis, course syllabus, privacy-protected anonymized survey data, and the student self-introduction video playlist via Google Drive and YouTube."
+  }
+};
 
 function speak(text, lang) {
   speechSynth.cancel();
@@ -1124,22 +1219,42 @@ function speak(text, lang) {
     if (v) currentUtterance.voice = v;
   }
   
-  currentUtterance.onstart = () => { document.getElementById('voiceInd').classList.add('active'); document.getElementById('voicePlay').style.display='none'; document.getElementById('voicePause').style.display='flex'; };
-  currentUtterance.onend = () => { document.getElementById('voiceInd').classList.remove('active'); document.getElementById('voicePlay').style.display='flex'; document.getElementById('voicePause').style.display='none'; isPaused = false; };
+  currentUtterance.onstart = () => { 
+    document.getElementById('voiceInd').classList.add('active'); 
+    document.getElementById('voicePlay').style.display='none'; 
+    document.getElementById('voicePause').style.display='flex'; 
+  };
+  currentUtterance.onend = () => { 
+    document.getElementById('voiceInd').classList.remove('active'); 
+    document.getElementById('voicePlay').style.display='flex'; 
+    document.getElementById('voicePause').style.display='none'; 
+    isPaused = false; 
+  };
   
   speechSynth.speak(currentUtterance);
   isPaused = false;
 }
 
 document.getElementById('voicePlay').addEventListener('click', () => {
-  if (isPaused) { speechSynth.resume(); isPaused = false; document.getElementById('voicePlay').style.display='none'; document.getElementById('voicePause').style.display='flex'; document.getElementById('voiceInd').classList.add('active'); }
-  else { speak(currentLang === 'zh' ? narrativeZh : narrativeEn, currentLang === 'zh' ? 'zh-TW' : 'en-GB'); }
+  if (isPaused) { 
+    speechSynth.resume(); 
+    isPaused = false; 
+    document.getElementById('voicePlay').style.display='none'; 
+    document.getElementById('voicePause').style.display='flex'; 
+    document.getElementById('voiceInd').classList.add('active'); 
+  } else { 
+    const pageNarrative = pageNarrations[currentPage];
+    const textToSpeak = currentLang === 'zh' ? pageNarrative.zh : pageNarrative.en;
+    speak(textToSpeak, currentLang === 'zh' ? 'zh-TW' : 'en-GB'); 
+  }
 });
+
 document.getElementById('voicePause').addEventListener('click', () => {
   speechSynth.pause(); isPaused = true;
   document.getElementById('voicePlay').style.display='flex'; document.getElementById('voicePause').style.display='none';
   document.getElementById('voiceInd').classList.remove('active');
 });
+
 document.getElementById('voiceStop').addEventListener('click', () => {
   speechSynth.cancel(); isPaused = false;
   document.getElementById('voicePlay').style.display='flex'; document.getElementById('voicePause').style.display='none';
